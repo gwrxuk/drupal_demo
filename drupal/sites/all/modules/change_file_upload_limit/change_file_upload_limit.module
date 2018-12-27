@@ -1,0 +1,248 @@
+<?php
+/**
+ * @file
+ * PHP Runtime Configurator module helps to configure various runtime PHP variables namely:
+ *  - File Upload Limit
+ *  - Memory Limit
+ *  - Maximum Execution Time Limit
+ *  - Maximum Input Variable Limit
+ *
+ * The admin UI is available at /admin/config/file_upload_limit.
+ * Permissions can be configured on permissions page
+ */
+ 
+/**
+ * Implements hook_permission().
+ */
+function change_file_upload_limit_permission() {
+  return array(
+    'Change file upload limit settings' => array(
+      'title' => t('Change PHP variable limits'),
+      'warning' => t('<i>Warning: Give to trusted roles only; this permission has security implications.</i>')
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function change_file_upload_limit_menu() {
+  $items['admin/config/file_upload_limit'] = array(
+    'title' => 'Change file upload limit',
+    'description' => 'Helps admin to change PHP runtime variables without changing php.ini file.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('change_file_upload_limit_custom_settings'),
+    'access arguments' => array('Change file upload limit settings'),
+    'file' => 'change_file_upload_limit.module',
+    'type' => MENU_NORMAL_ITEM,
+  );
+  
+  return $items;
+}
+
+/**
+ * Custom settings page: menu callback.
+ */
+function change_file_upload_limit_custom_settings() {
+  // Set file upload fields
+  $form['change_file_upload_limit_fieldset'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Change file upload limit'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  
+ $form['change_file_upload_limit_fieldset']['custom_upload_limit_turn_option'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Activate/Deactivate file upload limit'),
+    '#default_value' => variable_get('custom_upload_limit_turn_option', 0),
+    '#description' => t('Enable/Disable custom file upload limit. If you uncheck this option then it will not affect anything even if its active on modules page.')
+  );
+  
+  $form['change_file_upload_limit_fieldset']['custom_upload_limit'] = array(
+    '#type' => 'textfield',
+    '#title' => t('File upload limit'),
+    '#default_value' => variable_get('custom_upload_limit', 0),
+    '#description' => t('Enter the size in MB. Current file upload limit is ' . '<b>' . ini_get('upload_max_filesize') . '</b>' . '.'),
+    '#element_validate' => array('_change_file_upload_limit_validate'), 
+    '#maxlength' => 4,
+    '#size' => 5,
+    '#required' => TRUE,
+  );
+
+  // Set memory limit fields
+  $form['memory_limit_fieldset'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Memory limit'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  
+  $form['memory_limit_fieldset']['custom_memory_limit_turn_option'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Activate/Deactivate memory limit'),
+    '#default_value' => variable_get('custom_memory_limit_turn_option', 0),
+    '#description' => t('Enable/Disable custom memory limit. If you uncheck this option then it will not affect anything even if its active on modules page.')
+  );
+  
+  $form['memory_limit_fieldset']['custom_memory_limit'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Memory limit'),
+    '#default_value' => variable_get('custom_memory_limit', 0),
+    '#description' => t('Enter the size in MB. Current memory limit is ' . '<b>' . ini_get('memory_limit') . '</b>' . '.'),
+    '#element_validate' => array('_change_file_upload_limit_validate'),        
+    '#maxlength' => 4,
+    '#size' => 5,
+    '#required' => TRUE,
+  );
+
+  // Set maximum execution limit fields
+  $form['max_execution_time_limit_fieldset'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Maximum execution time limit'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  
+  $form['max_execution_time_limit_fieldset']['custom_max_execution_time_limit_turn_option'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Activate/Deactivate maximum execution time limit'),
+    '#default_value' => variable_get('custom_max_execution_time_limit_turn_option', 0),
+    '#description' => t('Enable/Disable custom maximum execution time limit. If you uncheck this option then it will not affect anything even if its active on modules page.')
+  );
+  
+  $form['max_execution_time_limit_fieldset']['custom_max_execution_time_limit'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Maximum execution time limit'),
+    '#default_value' => variable_get('custom_max_execution_time_limit', 0),
+    '#description' => t('Enter limit in Seconds. Current execution time limit is ' . '<b>' . ini_get('max_execution_time') . ' seconds</b>' . '.'),
+    '#element_validate' => array('_change_file_upload_limit_validate'), 
+    '#maxlength' => 4,
+    '#size' => 5,
+    '#required' => TRUE,
+  );
+
+  // Set maximum input vars fields
+  $form['max_input_vars_fieldset'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Maximum input variables limit'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  
+  $form['max_input_vars_fieldset']['custom_max_input_vars_limit_turn_option'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Activate/Deactivate maximum input variable limit'),
+    '#default_value' => variable_get('custom_max_input_vars_limit_turn_option', 0),
+    '#description' => t('Enable/Disable custom maximum input variable limit. If you uncheck this option then it will not affect anything even if its active on modules page.')
+  );
+  
+  $form['max_input_vars_fieldset']['custom_max_input_vars_limit'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Maximum input variable limit'),
+    '#default_value' => variable_get('custom_max_input_vars_limit', 0),
+    '#description' => t('Enter limit. Current maximum input variable limit is ' . '<b>' . ini_get('max_input_vars') . '</b>' . '.'),
+    '#element_validate' => array('_change_file_upload_limit_validate'), 
+    '#maxlength' => 4,
+    '#size' => 5,
+    '#required' => TRUE,
+  );
+  // Set a submit handler manually because the default submit handler
+  // gets overridden by the system_settings_form() submit handler.  
+  $form = system_settings_form($form);
+  $form['#submit'][] = '_change_file_values';
+  return $form;
+}
+
+/**
+ * Function to remove upload parameters, if they already exist, append new ones. After all changes made save and close the file to free up resources.
+ */
+function _change_file_values($form, &$form_state) {
+  $filename = '.htaccess';
+  // Check if .htaccess is writable otherwise return.
+  if (!(_check_file_permissions($filename))) {
+    form_set_error('change_file_upload_limit', "Problem opening $filename file, please check permissions.");
+    return;
+  }
+  // Take file as array.
+  $file_as_array = file($filename); 
+  // Run operation only if atleast a single checkbox is checked.
+  if ($form_state['values']['custom_upload_limit_turn_option'] || $form_state['values']['custom_memory_limit_turn_option'] || $form_state['values']['custom_max_execution_time_limit_turn_option'] || $form_state['values']['custom_max_input_vars_limit_turn_option']) {
+      $file_as_array = _remove_old_file_data($file_as_array); 
+      // Check individually each checkbox and assign values  
+    if ($form_state['values']['custom_upload_limit_turn_option']) {
+      $new_limit = $form_state['values']['custom_upload_limit'];
+
+ 
+      $file_as_array[] = "\n" . 'php_value post_max_size ' . $new_limit . 'M' . "\n";
+      $file_as_array[] = 'php_value upload_max_filesize ' . $new_limit . 'M';
+      $filter_file_list = array('post_max_size', 'upload_max_filesize');
+    }
+    if ($form_state['values']['custom_memory_limit_turn_option']) {
+      $new_limit = $form_state['values']['custom_memory_limit'];	
+      $file_as_array[] = "\n" . 'php_value memory_limit ' . $new_limit . 'M' . "\n";
+      $filter_file_list[] = 'memory_limit'; 	  
+    }
+    if ($form_state['values']['custom_max_execution_time_limit_turn_option']) { 
+    	$new_limit = $form_state['values']['custom_max_execution_time_limit'];	
+      $file_as_array[] = "\n" . 'php_value max_execution_time ' . $new_limit . "\n"; 	
+      $filter_file_list[] = 'max_execution_time';
+    }    
+    if ($form_state['values']['custom_max_input_vars_limit_turn_option']) { 
+      $new_limit = $form_state['values']['custom_max_input_vars_limit'];  
+      $file_as_array[] = "\n" . 'php_value max_input_vars ' . $new_limit . "\n";  
+      $filter_file_list[] = 'max_input_vars';
+    }  
+  }
+  // Check if something is unchecked then remove that data from .htaccess file.
+  if (empty($form_state['values']['custom_upload_limit_turn_option']) || empty($form_state['values']['custom_memory_limit_turn_option']) || empty($form_state['values']['custom_max_execution_time_limit_turn_option']) || empty($form_state['values']['custom_max_input_vars_limit_turn_option'])) { 
+    $file_as_array = _remove_old_file_data($file_as_array, isset($filter_file_list) ? $filter_file_list : array());
+  }
+  _save_and_close_file($file_as_array);
+}
+
+/**
+ * Function to remove upload parameters, if they already exist, so that we can write the new parameters.
+ */
+function _remove_old_file_data($file_as_array, $filter_file_list = array()) {
+  $full_filter_file_list = array('post_max_size', 'upload_max_filesize', 'memory_limit', 'max_execution_time', 'max_input_vars');                            
+  $final_filter_list = array_diff($full_filter_file_list, $filter_file_list);                                  
+  $final_filter_list = implode('|', $final_filter_list);
+                                   
+  foreach ($file_as_array as $file_array_key => $file_array_val) {                                     
+    if (!empty($final_filter_list) && preg_match('/' . $final_filter_list . '/', $file_array_val)) {   
+      unset($file_as_array[$file_array_key]);
+    } 
+  }
+  return $file_as_array;
+}
+
+/**
+ * Function to save and then close file with all changes.
+ */
+function _save_and_close_file($file_as_array) {
+  $filename = '.htaccess';
+  if (_check_file_permissions($filename)) {
+    $new_file_contents = implode("", $file_as_array);
+    $fp = @fopen($filename, 'w');
+    fwrite($fp, $new_file_contents);
+    fclose($fp);
+  } 
+}
+
+/**
+ * Function to check if .htaccess file is writeable or not.
+ */
+function _check_file_permissions($filename) {
+  return (is_writable($filename)) ? TRUE : FALSE;
+}
+
+/**
+ * Function to check that limit should be always positive or a floating value.
+ */
+function _change_file_upload_limit_validate($form, &$form_state) {
+  if (!(is_numeric($form_state['values']['custom_upload_limit'])) || ($form_state['values']['custom_upload_limit'] < 0)) {
+    form_set_error('custom_upload_limit', 'You must provide a valid integer for upload limit.');
+  }
+}
+

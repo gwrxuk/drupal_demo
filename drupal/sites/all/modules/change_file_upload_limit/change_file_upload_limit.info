@@ -1,0 +1,28 @@
+name = PHP Runtime Configurator
+description = Helps admin to change PHP runtime variables without changing php.ini file.
+package = Fields
+core = "7.x"
+configure = admin/config/file_upload_limit
+
+
+
+; Information added by Drupal.org packaging script on 2017-05-25
+version = "7.x-1.0"
+core = "7.x"
+project = "change_file_upload_limit"
+datestamp = "1495731785"
+
+
+; Information added by Drupal.org packaging script on 2017-06-03
+version = "7.x-1.0+1-dev"
+core = "7.x"
+project = "change_file_upload_limit"
+datestamp = "1496483946"
+
+
+; Information added by Drupal.org packaging script on 2017-11-08
+version = "7.x-1.2"
+core = "7.x"
+project = "change_file_upload_limit"
+datestamp = "1510161683"
+

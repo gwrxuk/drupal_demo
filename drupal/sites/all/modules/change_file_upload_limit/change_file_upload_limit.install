@@ -1,0 +1,21 @@
+<?php
+
+/**
+ * @file
+ * Install/Uninstall functions for the change_file_upload_limit module.
+ */
+
+/**
+ * Implements hook_uninstall().
+ */
+function change_file_upload_limit_uninstall() {
+  // Remove variables.
+  variable_del('custom_upload_limit_turn_option');
+  variable_del('custom_upload_limit');
+  variable_del('custom_memory_limit_turn_option');
+  variable_del('custom_memory_limit');
+  variable_del('custom_max_execution_time_limit_turn_option');
+  variable_del('custom_max_execution_time_limit');
+  variable_del('custom_max_input_vars_limit_turn_option');
+  variable_del('custom_max_input_vars_limit');
+}
